@@ -3,9 +3,12 @@ package com.clone.orgs.ui.recyclerview.adapters
 import android.content.Context
 import android.content.Intent
 import android.view.LayoutInflater
+import android.view.MenuInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.PopupMenu
 import android.widget.TextView
+import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.clone.orgs.R
@@ -19,8 +22,9 @@ import java.util.*
 
 class ListaProdutosAdapter(
     private val context: Context,
-    private var listaProdutos: List<Produto>
+    private var listaProdutos: List<Produto> = emptyList()
 ) : RecyclerView.Adapter<ListaProdutosAdapter.MeuViewHolder>() {
+    lateinit var menuListener: MenuClickListener
 
     /*O professor Alex Felipe deixou a listaProdutos apenas como um parâmetro normal, sem ser property.
     * Então ele criou um property no escopo da classe que é um mutableList, deixou private e val, e atribuiu a lista
@@ -29,6 +33,11 @@ class ListaProdutosAdapter(
     * e addAll da lista recebida como parâmetro nesse método.
     * val private listaProdutos = listaProdutos.toMutableList()
     * Segundo ele, é comum chamar essa lista utilizada internamente no adapter como 'dataset'*/
+
+    interface MenuClickListener{
+        fun clickEditar(produto: Produto)
+        fun clickDeletar(produto: Produto)
+    }
 
     inner class MeuViewHolder(binding: ProdutoItemBinding) : RecyclerView.ViewHolder(binding.root) {
         val nome = binding.produtoTxtNome
@@ -50,6 +59,21 @@ class ListaProdutosAdapter(
                 val intent = Intent(context, DetalhesProdutoActivity::class.java)
                 intent.putExtra("produto", produto)
                 context.startActivity(intent)
+            }
+
+            itemView.setOnLongClickListener {
+                val popUpMenu = PopupMenu(context, itemView)
+                MenuInflater(context).inflate(R.menu.menu_detalhes_produto, popUpMenu.menu)
+                popUpMenu.show()
+
+                popUpMenu.setOnMenuItemClickListener {
+                    when(it.itemId){
+                        R.id.it_editar -> menuListener.clickEditar(produto)
+                        R.id.it_deletar -> menuListener.clickDeletar(produto)
+                    }
+                    true
+                }
+                true
             }
         }
     }

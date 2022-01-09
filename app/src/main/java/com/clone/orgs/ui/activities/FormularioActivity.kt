@@ -4,7 +4,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import coil.load
-import com.clone.orgs.dao.ProdutosDAO
+import com.clone.orgs.database.AppDatabase
 import com.clone.orgs.databinding.ActivityFormularioProdutosBinding
 import com.clone.orgs.modelos.Produto
 import com.clone.orgs.ui.dialog.FormularioImgDialog
@@ -15,12 +15,28 @@ private const val tagFormularioActivity = "LogFormularioActivity"
 class FormularioActivity : AppCompatActivity() {
     private val binding by lazy { ActivityFormularioProdutosBinding.inflate(layoutInflater) }
     private var urlImagem: String? = null
+    private var produto: Produto? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
-
         title = "Cadastrar produto"
+
+        val produtoEdit = intent.extras?.let {
+            it.get("produto_edit") as Produto
+        }
+        if(produtoEdit != null){
+            binding.apply {
+                formularioEtDescProduto.editText?.setText(produtoEdit.descricao)
+                formularioEtNomeProduto.editText?.setText(produtoEdit.nome)
+                formularioEtPrecoProduto.editText?.setText(produtoEdit.valor.toString())
+                urlImagem = produtoEdit.urlImagem
+                formularioImgProduto.load(urlImagem)
+                produto = produtoEdit
+            }
+            title = "Editar produto"
+        }
+
         configurarBotaoSalvar()
         configuraImagem()
     }
@@ -40,7 +56,10 @@ class FormularioActivity : AppCompatActivity() {
         val campoNomeProduto = binding.formularioEtNomeProduto
         val campoDescProduto = binding.formularioEtDescProduto
         val campoPrecoProduto = binding.formularioEtPrecoProduto
-        val produtosDAO = ProdutosDAO()
+
+        val db = AppDatabase.getDb(this)
+
+        val produtoDAO = db.produtoDAO()
 
         val botaoSalvar = binding.formularioBtnSalvar
         botaoSalvar.setOnClickListener {
@@ -54,9 +73,15 @@ class FormularioActivity : AppCompatActivity() {
                 BigDecimal(precoEmTexto)
             }
 
-            val produtoNovo = Produto(nome, descProduto, preco, urlImagem)
+            val id = produto?.id ?: 0L //id com valor 0 serve pro Room criar um novo produto.
+            val produtoNovo = Produto(nome, descProduto, preco, urlImagem, id)
+
+            if (produto == null){
+                produtoDAO.inserirProduto(produtoNovo)
+            }else{
+                produtoDAO.editaProduto(produtoNovo)
+            }
             Log.i(tagFormularioActivity, produtoNovo.toString())
-            produtosDAO.adicionar(produtoNovo)
             finish()
         }
     }

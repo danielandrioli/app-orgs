@@ -11,8 +11,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Orgs">
-        <activity android:name=".ui.activities.DetalhesProdutoActivity"
-            android:theme="@style/Orgs_sem_actionBar"/>
+        <activity android:name=".ui.activities.DetalhesProdutoActivity"/>
         <activity android:name=".ui.activities.FormularioActivity" />
         <activity android:name=".ui.activities.MainActivity">
             <intent-filter>
