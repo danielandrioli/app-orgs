@@ -2,12 +2,15 @@ package com.clone.orgs.ui.activities
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.clone.orgs.R
 import com.clone.orgs.database.AppDatabase
 import com.clone.orgs.database.dao.ProdutoDAO
 import com.clone.orgs.databinding.ActivityMainBinding
-import com.clone.orgs.helpers.AlertDialogDeletar
+import com.clone.orgs.ui.dialog.AlertDialogDeletar
 import com.clone.orgs.helpers.ImageLoaderCoil
 import com.clone.orgs.modelos.Produto
 import com.clone.orgs.ui.recyclerview.adapters.ListaProdutosAdapter
@@ -25,9 +28,9 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
 
-        ImageLoaderCoil().configuraImageLoaderCoil(this)
+        ImageLoaderCoil.getAndSetImageLoaderCoil(this)
 
-        val db = AppDatabase.getDb(this)
+        val db = AppDatabase.getDb(applicationContext)
 
         produtoDAO = db.produtoDAO()
 
@@ -51,22 +54,38 @@ class MainActivity : AppCompatActivity() {
         recyclerView.layoutManager = LinearLayoutManager(this)
     }
 
-    private fun configuraClickMenuPopUp(){
+    private fun configuraClickMenuPopUp() {
         rAdapter.menuListener = object : ListaProdutosAdapter.MenuClickListener {
             override fun clickEditar(produto: Produto) {
                 Intent(this@MainActivity, FormularioActivity::class.java).apply {
-                    putExtra("produto_edit", produto)
+                    putExtra("id_produto_edit", produto.id)
                     startActivity(this)
                 }
             }
 
             override fun clickDeletar(produto: Produto) {
-                AlertDialogDeletar.buildAndShow(this@MainActivity){
+                AlertDialogDeletar.buildAndShow(this@MainActivity) {
                     produtoDAO.deletarProduto(produto)
                     rAdapter.atualizar(produtoDAO.buscaListaProdutos())
                 }
             }
         }
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu_ordenacao, menu)
+        return super.onCreateOptionsMenu(menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when(item.itemId){
+            R.id.it_ordem_nome_asc -> rAdapter.atualizar(produtoDAO.buscaListaNomeAsc())
+            R.id.it_ordem_nome_desc -> rAdapter.atualizar(produtoDAO.buscaListaNomeDesc())
+            R.id.it_ordem_valor_asc -> rAdapter.atualizar(produtoDAO.buscaListaPrecoAsc())
+            R.id.it_ordem_valor_desc -> rAdapter.atualizar(produtoDAO.buscaListaPrecoDesc())
+            R.id.it_ordem_criacao -> rAdapter.atualizar(produtoDAO.buscaListaProdutos())
+        }
+        return true
     }
 
     override fun onResume() {

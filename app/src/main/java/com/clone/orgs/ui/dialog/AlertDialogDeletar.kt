@@ -1,4 +1,4 @@
-package com.clone.orgs.helpers
+package com.clone.orgs.ui.dialog
 
 import android.content.Context
 import androidx.appcompat.app.AlertDialog

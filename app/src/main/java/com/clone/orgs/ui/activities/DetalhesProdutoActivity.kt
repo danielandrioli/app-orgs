@@ -1,33 +1,48 @@
 package com.clone.orgs.ui.activities
 
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
-import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import coil.load
 import com.clone.orgs.R
 import com.clone.orgs.database.AppDatabase
 import com.clone.orgs.databinding.ActivityDetalhesProdutoBinding
-import com.clone.orgs.helpers.AlertDialogDeletar
+import com.clone.orgs.ui.dialog.AlertDialogDeletar
 import com.clone.orgs.helpers.FormatadorMoeda
 import com.clone.orgs.modelos.Produto
 
 class DetalhesProdutoActivity : AppCompatActivity() {
     private val binding by lazy { ActivityDetalhesProdutoBinding.inflate(layoutInflater) }
-    private lateinit var produto: Produto
+    private var produto: Produto? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
+    }
 
-        produto = intent.extras?.get("produto") as Produto
-        binding.apply {
-            aDetalhesImg.load(produto.urlImagem)
-            aDetalhesPreco.text = FormatadorMoeda().formataMoedaBr(produto.valor)
-            aDetalhesTitulo.text = produto.nome
-            aDetalhesTexto.text = produto.descricao
+    override fun onResume() {
+        carregaProduto()
+        super.onResume()
+    }
+
+    private fun carregaProduto() {
+        val produtoId = intent.getLongExtra("produto_id", 0L)
+//        val produtoId = intent.extras?.get("produto_id")?.let{ it as Long } //o que eu tava utilizando antes. O retorno era Any? e eu convertia para Long
+//        val produtin = intent.getParcelableExtra<Produto>("produto") //esse era o código utilizado pelo professor para captar o Produto
+
+        produto = AppDatabase.getDb(this).produtoDAO().buscaProduto(produtoId)
+        produto?.let {
+            binding.apply {
+                if (it.urlImagem == null) aDetalhesImg.load(R.drawable.imgnotfound)
+                else{
+                    aDetalhesImg.load(it.urlImagem)
+                }
+                aDetalhesPreco.text = FormatadorMoeda().formataMoedaBr(it.valor)
+                aDetalhesTitulo.text = it.nome
+                aDetalhesTexto.text = it.descricao
+            }
         }
     }
 
@@ -40,15 +55,16 @@ class DetalhesProdutoActivity : AppCompatActivity() {
         when (item.itemId) {
             R.id.it_deletar -> {
                 AlertDialogDeletar.buildAndShow(this) {
-                    AppDatabase.getDb(this).produtoDAO().deletarProduto(produto)
+                    produto?.let {
+                        AppDatabase.getDb(this).produtoDAO().deletarProduto(it)
+                    }
                     finish()
                 }
             }
             R.id.it_editar -> {
                 val intent = Intent(this, FormularioActivity::class.java)
-                intent.putExtra("produto_edit", produto)
+                produto?.let { intent.putExtra("id_produto_edit", it.id) }
                 startActivity(intent)
-                finish()
             }
         }
         return true

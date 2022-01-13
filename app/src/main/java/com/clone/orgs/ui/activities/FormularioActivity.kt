@@ -16,29 +16,36 @@ class FormularioActivity : AppCompatActivity() {
     private val binding by lazy { ActivityFormularioProdutosBinding.inflate(layoutInflater) }
     private var urlImagem: String? = null
     private var produto: Produto? = null
+    private val produtoDAO by lazy { AppDatabase.getDb(this).produtoDAO() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
         title = "Cadastrar produto"
 
-        val produtoEdit = intent.extras?.let {
-            it.get("produto_edit") as Produto
+        val idProduto = intent.extras?.get("id_produto_edit")?.let {
+            it as Long //poderia utilizar o getLongExtra, mas deixei esse código para fins didáticos.
         }
-        if(produtoEdit != null){
-            binding.apply {
-                formularioEtDescProduto.editText?.setText(produtoEdit.descricao)
-                formularioEtNomeProduto.editText?.setText(produtoEdit.nome)
-                formularioEtPrecoProduto.editText?.setText(produtoEdit.valor.toString())
-                urlImagem = produtoEdit.urlImagem
-                formularioImgProduto.load(urlImagem)
-                produto = produtoEdit
-            }
-            title = "Editar produto"
+        if (idProduto != null) {
+            produto = produtoDAO.buscaProduto(idProduto)
+            preencheCampos()
         }
 
         configurarBotaoSalvar()
         configuraImagem()
+    }
+
+    private fun preencheCampos() {
+        binding.apply {
+            produto?.let { produto ->
+                formularioEtDescProduto.editText?.setText(produto.descricao)
+                formularioEtNomeProduto.editText?.setText(produto.nome)
+                formularioEtPrecoProduto.editText?.setText(produto.valor.toPlainString())
+                urlImagem = produto.urlImagem
+                formularioImgProduto.load(urlImagem)
+            }
+        }
+        title = "Editar produto"
     }
 
     private fun configuraImagem() {
@@ -53,36 +60,29 @@ class FormularioActivity : AppCompatActivity() {
     }
 
     private fun configurarBotaoSalvar() {
-        val campoNomeProduto = binding.formularioEtNomeProduto
-        val campoDescProduto = binding.formularioEtDescProduto
-        val campoPrecoProduto = binding.formularioEtPrecoProduto
+        binding.apply {
+            formularioBtnSalvar.setOnClickListener {
+                val nome: String = formularioEtNomeProduto.editText?.text.toString()
+                val descProduto: String = formularioEtDescProduto.editText?.text.toString()
+                val precoEmTexto: String = formularioEtPrecoProduto.editText?.text.toString()
 
-        val db = AppDatabase.getDb(this)
+                val preco = if (precoEmTexto.isBlank()) {
+                    BigDecimal.ZERO
+                } else {
+                    BigDecimal(precoEmTexto)
+                }
 
-        val produtoDAO = db.produtoDAO()
+                val id = produto?.id ?: 0L //id com valor 0 serve pro Room criar um novo produto.
+                val produtoNovo = Produto(nome, descProduto, preco, urlImagem, id)
 
-        val botaoSalvar = binding.formularioBtnSalvar
-        botaoSalvar.setOnClickListener {
-            val nome: String = campoNomeProduto.editText?.text.toString()
-            val descProduto: String = campoDescProduto.editText?.text.toString()
-            val precoEmTexto: String = campoPrecoProduto.editText?.text.toString()
-
-            val preco = if (precoEmTexto.isBlank()) {
-                BigDecimal.ZERO
-            } else {
-                BigDecimal(precoEmTexto)
+                if (produto == null) {
+                    produtoDAO.inserirProduto(produtoNovo)
+                } else {
+                    produtoDAO.editaProduto(produtoNovo)
+                }
+                Log.i(tagFormularioActivity, produtoNovo.toString())
+                finish()
             }
-
-            val id = produto?.id ?: 0L //id com valor 0 serve pro Room criar um novo produto.
-            val produtoNovo = Produto(nome, descProduto, preco, urlImagem, id)
-
-            if (produto == null){
-                produtoDAO.inserirProduto(produtoNovo)
-            }else{
-                produtoDAO.editaProduto(produtoNovo)
-            }
-            Log.i(tagFormularioActivity, produtoNovo.toString())
-            finish()
         }
     }
 }

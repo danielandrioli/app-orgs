@@ -2,13 +2,12 @@ package com.clone.orgs.ui.recyclerview.adapters
 
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.MenuInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.PopupMenu
-import android.widget.TextView
-import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.clone.orgs.R
@@ -16,9 +15,6 @@ import com.clone.orgs.databinding.ProdutoItemBinding
 import com.clone.orgs.helpers.FormatadorMoeda
 import com.clone.orgs.modelos.Produto
 import com.clone.orgs.ui.activities.DetalhesProdutoActivity
-import java.math.BigDecimal
-import java.text.NumberFormat
-import java.util.*
 
 class ListaProdutosAdapter(
     private val context: Context,
@@ -34,7 +30,7 @@ class ListaProdutosAdapter(
     * val private listaProdutos = listaProdutos.toMutableList()
     * Segundo ele, é comum chamar essa lista utilizada internamente no adapter como 'dataset'*/
 
-    interface MenuClickListener{
+    interface MenuClickListener {
         fun clickEditar(produto: Produto)
         fun clickDeletar(produto: Produto)
     }
@@ -49,15 +45,16 @@ class ListaProdutosAdapter(
             nome.text = produto.nome
             descricao.text = produto.descricao
             valor.text = FormatadorMoeda().formataMoedaBr(produto.valor)
-            if(produto.urlImagem != null){
+            if (produto.urlImagem != null) {
                 imagem.load(produto.urlImagem)
-            } else{
+                imagem.visibility = View.VISIBLE
+            } else {
                 imagem.visibility = View.GONE
             }
 
             itemView.setOnClickListener {
                 val intent = Intent(context, DetalhesProdutoActivity::class.java)
-                intent.putExtra("produto", produto)
+                intent.putExtra("produto_id", produto.id)
                 context.startActivity(intent)
             }
 
@@ -67,7 +64,7 @@ class ListaProdutosAdapter(
                 popUpMenu.show()
 
                 popUpMenu.setOnMenuItemClickListener {
-                    when(it.itemId){
+                    when (it.itemId) {
                         R.id.it_editar -> menuListener.clickEditar(produto)
                         R.id.it_deletar -> menuListener.clickDeletar(produto)
                     }

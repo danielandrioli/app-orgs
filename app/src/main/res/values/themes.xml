@@ -13,6 +13,11 @@
         <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->
         <item name="fontFamily">@font/montserrat</item>
+<!--        <item name="actionOverflowButtonStyle">@style/botao_menu_ordem</item>-->
+    </style>
+
+    <style name="botao_menu_ordem" parent="Widget.AppCompat.Light.ActionButton.Overflow">
+        <item name="android:icon">@drawable/ic_order</item>
     </style>
 
     <style name="Orgs_sem_actionBar" parent="Theme.MaterialComponents.DayNight.NoActionBar">
